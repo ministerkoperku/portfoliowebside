@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>Kornel — Portfolio</title>
+<meta name="description" content="Portfolio Kornela (ministerkoperku) — młodego twórcy z Polski."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+<style>
+:root {
+  --bg:#050a09; --surface:#0d1815; --card:#0f1c18;
+  --border:rgba(52,211,153,.10); --border-h:rgba(52,211,153,.28);
+  --mint:#34d399; --mint-2:#6ee7b7; --mint-3:#10b981;
+  --pink:#f472b6; --red:#ef4444;
+  --text:#e6f0eb; --text-2:#a8c0b5; --muted:#6b8478; --dim:#4a6359;
+  --glow-m:0 0 32px rgba(52,211,153,.25);
+  --r-sm:6px; --r:10px; --r-lg:16px;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font:inherit;cursor:pointer}
+::selection{background:rgba(52,211,153,.3);color:var(--text)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--mint-3);border-radius:3px}
+
+#three-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+.bg-grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+.bg-vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at center,transparent 30%,rgba(5,10,9,.6) 100%)}
+
+#loader{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;transition:opacity .6s var(--ease-out),visibility .6s}
+#loader.hidden{opacity:0;visibility:hidden}
+.loader-dot{width:8px;height:8px;background:var(--mint);border-radius:50%;box-shadow:var(--glow-m);animation:pulse 1.4s ease-in-out infinite}
+.loader-text{font-family:var(--font-mono);font-size:.75rem;color:var(--muted);letter-spacing:.15em}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+
+.cursor{position:fixed;top:0;left:0;width:24px;height:24px;border:1.5px solid var(--mint);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s;mix-blend-mode:difference}
+.cursor-dot{position:fixed;top:0;left:0;width:4px;height:4px;background:var(--mint);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+.cursor.hover{width:56px;height:56px;border-color:var(--pink)}
+@media(hover:none){.cursor,.cursor-dot{display:none}}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 32px;display:flex;justify-content:space-between;align-items:center;background:rgba(5,10,9,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid rgba(52,211,153,.06)}
+.nav-logo{font-family:var(--font-mono);font-size:.82rem;font-weight:500;color:var(--mint);letter-spacing:.05em}
+.nav-logo span{color:var(--text-2)}
+.nav-links{display:flex;gap:4px;flex-wrap:wrap}
+.nav-link{font-family:var(--font-mono);font-size:.76rem;color:var(--text-2);padding:7px 14px;border-radius:var(--r-sm);transition:color .2s,background .2s}
+.nav-link:hover{color:var(--mint);background:rgba(52,211,153,.06)}
+@media(max-width:720px){nav{padding:14px 18px}.nav-link{font-size:.66rem;padding:5px 8px}}
+
+main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 32px}
+@media(max-width:720px){main{padding:0 24px}}
+section{padding:120px 0;position:relative}
+@media(max-width:720px){section{padding:80px 0}}
+
+.hero{min-height:100vh;display:grid;align-items:center;padding-top:100px;padding-bottom:80px;position:relative}
+.hero-content{max-width:640px}
+.hero-tag{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:.78rem;color:var(--mint);margin-bottom:24px;padding:6px 14px;border:1px solid var(--border);border-radius:99px;background:rgba(52,211,153,.04);opacity:0;animation:fadeUp .8s .3s var(--ease-out) forwards}
+.hero-tag::before{content:'';width:6px;height:6px;background:var(--mint);border-radius:50%;box-shadow:0 0 10px var(--mint);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-title{font-family:var(--font-display);font-weight:600;font-size:clamp(3rem,10vw,7rem);line-height:.95;letter-spacing:-.04em;margin-bottom:24px;opacity:0;animation:fadeUp .8s .4s var(--ease-out) forwards}
+.hero-title .accent{background:linear-gradient(135deg,var(--mint),var(--mint-2),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-subtitle{font-family:var(--font-mono);font-size:.9rem;color:var(--text-2);margin-bottom:28px;opacity:0;animation:fadeUp .8s .5s var(--ease-out) forwards}
+.hero-subtitle .sep{color:var(--dim);margin:0 12px}
+.hero-description{font-size:1.05rem;color:var(--text-2);max-width:540px;line-height:1.75;margin-bottom:36px;opacity:0;animation:fadeUp .8s .6s var(--ease-out) forwards}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .7s var(--ease-out) forwards}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 26px;border-radius:var(--r-sm);font-weight:600;font-size:.92rem;border:1.5px solid;transition:all .25s var(--ease)}
+.btn.primary{background:var(--mint);border-color:var(--mint);color:var(--bg)}
+.btn.primary:hover{background:var(--mint-2);transform:translateY(-2px);box-shadow:var(--glow-m)}
+.btn.outline{background:transparent;border-color:var(--border-h);color:var(--text)}
+.btn.outline:hover{border-color:var(--mint);color:var(--mint);transform:translateY(-2px)}
+.btn-arrow{transition:transform .25s var(--ease)}
+.btn:hover .btn-arrow{transform:translateX(3px)}
+.hero-scroll{position:absolute;bottom:40px;left:32px;font-family:var(--font-mono);font-size:.7rem;color:var(--muted);letter-spacing:.15em;display:flex;align-items:center;gap:12px;opacity:0;animation:fadeUp 1s 1.2s var(--ease-out) forwards}
+.hero-scroll::before{content:'';width:30px;height:1px;background:var(--mint);animation:scrollLine 2s ease-in-out infinite}
+@keyframes scrollLine{0%{transform:scaleX(0);transform-origin:left}50%{transform:scaleX(1);transform-origin:left}100%{transform:scaleX(0);transform-origin:right}}
+@media(max-width:720px){.hero-scroll{display:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.section-header{margin-bottom:56px;max-width:720px}
+.section-number{font-family:var(--font-mono);font-size:.72rem;color:var(--mint);letter-spacing:.15em;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.section-number::after{content:'';width:40px;height:1px;background:var(--mint);opacity:.4}
+.section-title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,5vw,2.75rem);letter-spacing:-.03em;margin-bottom:14px;line-height:1.1}
+.section-subtitle{color:var(--text-2);font-size:1rem;max-width:560px}
+</style>
+<style>
+.about-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:60px;align-items:start}
+@media(max-width:860px){.about-grid{grid-template-columns:1fr;gap:40px}}
+.about-text{color:var(--text-2);line-height:1.8}
+.about-text strong{color:var(--text);font-weight:600}
+.about-text p+p{margin-top:18px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px 20px;transition:border-color .25s,transform .25s var(--ease)}
+.stat:hover{border-color:var(--border-h);transform:translateY(-2px)}
+.stat-value{font-family:var(--font-display);font-size:1.8rem;font-weight:600;color:var(--mint);line-height:1}
+.stat-label{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);margin-top:8px}
+.about-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:32px;position:relative;overflow:hidden}
+.about-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--mint),var(--pink))}
+.about-card-label{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);letter-spacing:.15em;margin-bottom:4px}
+.about-card-name{font-family:var(--font-display);font-size:1.4rem;font-weight:600;margin-bottom:22px}
+.about-meta{display:flex;flex-direction:column;gap:14px}
+.about-meta-row{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--border);font-size:.88rem}
+.about-meta-row:last-child{border:none;padding-bottom:0}
+.about-meta-label{font-family:var(--font-mono);font-size:.72rem;color:var(--muted)}
+.about-meta-value{color:var(--text);font-weight:500}
+
+.projects-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+@media(max-width:860px){.projects-grid{grid-template-columns:1fr}}
+.project{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:32px;position:relative;overflow:hidden;transition:border-color .3s var(--ease),transform .3s var(--ease);transform-style:preserve-3d;cursor:pointer}
+.project::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(52,211,153,.08),transparent 50%);opacity:0;transition:opacity .3s;pointer-events:none}
+.project:hover{border-color:var(--border-h)}
+.project:hover::before{opacity:1}
+.project-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.project-icon{width:44px;height:44px;border-radius:var(--r-sm);background:rgba(52,211,153,.08);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.project-badge{font-family:var(--font-mono);font-size:.68rem;padding:4px 10px;border-radius:99px;border:1px solid var(--border-h);color:var(--mint)}
+.project-badge.wip{border-color:rgba(244,114,182,.3);color:var(--pink)}
+.project-title{font-family:var(--font-display);font-weight:600;font-size:1.25rem;margin-bottom:8px}
+.project-description{color:var(--text-2);font-size:.92rem;line-height:1.65;margin-bottom:22px}
+.project-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
+.tag{font-family:var(--font-mono);font-size:.68rem;padding:3px 9px;border-radius:4px;background:rgba(52,211,153,.06);color:var(--text-2)}
+.project-actions{display:flex;gap:16px;align-items:center}
+.project-link{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.8rem;color:var(--mint);transition:color .2s,gap .2s;font-weight:500}
+.project-link:hover{gap:10px;color:var(--mint-2)}
+.project-link.muted{color:var(--muted);cursor:default}
+
+.skills-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:720px){.skills-grid{grid-template-columns:1fr}}
+.skill{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;transition:border-color .25s}
+.skill:hover{border-color:var(--border-h)}
+.skill-name{font-family:var(--font-mono);font-size:.85rem;color:var(--text);font-weight:500}
+.skill-meta{display:flex;align-items:center;gap:14px;flex:1;justify-content:flex-end}
+.skill-bar{flex:1;max-width:140px;height:3px;background:rgba(52,211,153,.08);border-radius:2px;overflow:hidden}
+.skill-fill{height:100%;background:linear-gradient(90deg,var(--mint-3),var(--mint));width:0;transition:width 1.2s var(--ease-out);border-radius:2px}
+.skill-level{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);min-width:38px;text-align:right}
+
+.timeline{display:flex;flex-direction:column;gap:4px}
+.timeline-item{display:grid;grid-template-columns:140px 32px 1fr;gap:24px;padding:20px 0;align-items:start;border-bottom:1px solid var(--border)}
+.timeline-item:last-child{border:none}
+.timeline-year{font-family:var(--font-mono);font-size:.78rem;color:var(--mint);padding-top:4px}
+.timeline-marker{width:14px;height:14px;border:2px solid var(--mint);background:var(--bg);border-radius:50%;margin:6px auto 0;box-shadow:0 0 0 4px rgba(52,211,153,.08)}
+.timeline-title{font-family:var(--font-display);font-weight:600;font-size:1.05rem;margin-bottom:4px}
+.timeline-desc{color:var(--text-2);font-size:.9rem;line-height:1.65}
+@media(max-width:720px){.timeline-item{grid-template-columns:80px 20px 1fr;gap:14px}.timeline-year{font-size:.72rem}}
+
+.photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:860px){.photo-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.photo-grid{grid-template-columns:repeat(2,1fr)}}
+.photo{position:relative;aspect-ratio:1;overflow:hidden;border-radius:var(--r);border:1px solid var(--border);cursor:pointer;background:var(--card);transition:border-color .25s,transform .3s var(--ease)}
+.photo:hover{border-color:var(--border-h);transform:translateY(-3px)}
+.photo img{width:100%;height:100%;object-fit:cover;transition:transform .5s var(--ease)}
+.photo:hover img{transform:scale(1.08)}
+.photo-number{position:absolute;top:8px;right:10px;font-family:var(--font-mono);font-size:.68rem;font-weight:500;color:var(--mint);background:rgba(5,10,9,.75);padding:3px 8px;border-radius:3px;letter-spacing:.05em;z-index:2;backdrop-filter:blur(4px)}
+.photo figcaption{position:absolute;bottom:0;left:0;right:0;padding:14px 14px 12px;background:linear-gradient(to top,rgba(5,10,9,.95),rgba(5,10,9,0));color:var(--text);font-family:var(--font-mono);font-size:.7rem;line-height:1.4;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s var(--ease);z-index:1}
+.photo:hover figcaption{opacity:1;transform:translateY(0)}
+.photo-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-family:var(--font-mono);font-size:.7rem;background:repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(52,211,153,.02) 8px,rgba(52,211,153,.02) 16px)}
+.photo-empty span{font-size:1.4rem;opacity:.5}
+
+.lightbox{position:fixed;inset:0;z-index:10000;background:rgba(5,10,9,.95);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;padding:40px;opacity:0;pointer-events:none;transition:opacity .25s}
+.lightbox.open{opacity:1;pointer-events:all}
+.lightbox-content{position:relative;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;gap:16px}
+.lightbox-content img{max-width:100%;max-height:80vh;border-radius:var(--r);box-shadow:0 20px 60px rgba(0,0,0,.5);object-fit:contain}
+.lightbox-caption{font-family:var(--font-mono);font-size:.85rem;color:var(--text-2);text-align:center;max-width:600px}
+.lightbox-close{position:absolute;top:-44px;right:0;background:none;border:1px solid var(--border-h);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:border-color .2s,background .2s}
+.lightbox-close:hover{border-color:var(--mint);background:rgba(52,211,153,.08)}
+
+.yt-card{background:linear-gradient(135deg,var(--card) 0%,rgba(15,28,24,.6) 100%);border:1px solid var(--border);border-radius:var(--r-lg);padding:40px;display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:center;transition:border-color .3s,transform .3s var(--ease)}
+.yt-card:hover{border-color:var(--border-h);transform:translateY(-2px)}
+.yt-icon{width:64px;height:64px;background:#cc0000;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.6rem;box-shadow:0 8px 24px rgba(204,0,0,.3)}
+.yt-title{font-family:var(--font-display);font-weight:600;font-size:1.3rem;margin-bottom:6px}
+.yt-handle{font-family:var(--font-mono);font-size:.82rem;color:var(--mint);margin-bottom:12px}
+.yt-description{color:var(--text-2);font-size:.92rem;line-height:1.6}
+@media(max-width:720px){.yt-card{grid-template-columns:1fr;gap:20px;padding:28px}}
+
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.contact-link{display:flex;align-items:center;gap:16px;padding:20px 22px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);transition:all .25s var(--ease)}
+.contact-link:hover{border-color:var(--border-h);transform:translateY(-2px);background:rgba(52,211,153,.03)}
+.contact-icon{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:rgba(52,211,153,.08);border-radius:var(--r-sm);font-size:1.1rem;flex-shrink:0}
+.contact-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.contact-label{font-family:var(--font-mono);font-size:.7rem;color:var(--muted)}
+.contact-value{font-size:.9rem;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+footer{position:relative;z-index:2;margin-top:60px;padding:40px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;max-width:1100px;margin-left:auto;margin-right:auto}
+.footer-text,.footer-meta{font-family:var(--font-mono);font-size:.76rem}
+.footer-text{color:var(--muted)}
+.footer-meta{color:var(--mint)}
+
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:720px){
+  .hero{padding-top:90px}
+  .section-header{margin-bottom:36px}
+  .about-card{padding:24px}
+  .project{padding:22px}
+  .yt-card{padding:24px}
+  footer{padding:32px 24px;flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+<div id="loader">
+  <div class="loader-dot"></div>
+  <div class="loader-text">INITIALIZING</div>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<canvas id="three-canvas"></canvas>
+<div class="bg-grain"></div>
+<div class="bg-vignette"></div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-content">
+    <button class="lightbox-close" id="lbClose">×</button>
+    <img id="lbImg" alt=""/>
+    <div class="lightbox-caption" id="lbCap"></div>
+  </div>
+</div>
+
+<nav>
+  <a class="nav-logo" href="#top">kornel<span>.dev</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="#about">o mnie</a>
+    <a class="nav-link" href="#projects">projekty</a>
+    <a class="nav-link" href="#skills">skille</a>
+    <a class="nav-link" href="#plans">plany</a>
+    <a class="nav-link" href="#photos">foto</a>
+    <a class="nav-link" href="#contact">kontakt</a>
+  </div>
+</nav>
+
+<main id="top">
+
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-tag">dostępny na nowe projekty</div>
+    <h1 class="hero-title">Cześć, jestem<br><span class="accent">Kornel</span>.</h1>
+    <p class="hero-subtitle">14 lat <span class="sep">/</span> Dolnośląskie, PL <span class="sep">/</span> ministerkoperku</p>
+    <p class="hero-description">Młody developer i twórca z pasją do Minecraft moddingu, Linuxa i sztucznej inteligencji. Uczę się programowania w Javie, tworzę autorskie mody i czasami coś wrzucam na YouTube.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#projects">Zobacz projekty <span class="btn-arrow">→</span></a>
+      <a class="btn outline" href="#contact">Kontakt</a>
+    </div>
+  </div>
+  <div class="hero-scroll">SCROLL ↓</div>
+</section>
+
+<section id="about" class="reveal">
+  <div class="section-header">
+    <div class="section-number">01 // o mnie</div>
+    <h2 class="section-title">Krótko o tym, kim jestem</h2>
+    <p class="section-subtitle">Uczeń, modder, początkujący koder — z dużą głową pełną pomysłów.</p>
+  </div>
+  <div class="about-grid">
+    <div>
+      <div class="about-text">
+        <p>Mam na imię <strong>Kornel</strong>, w sieci znany jako <strong>ministerkoperku</strong>. Chodzę do 8 klasy SP im. Sybiraków w Rakoszycach, mieszkam w Krynicznie na Dolnym Śląsku. Sam siebie określam jako piwniczaka który gram, doom scrolluje i udaje, że wie co robi.</p>
+        <p>Mody do Minecrafta robię od 12 roku życia — zaczęło się od moda <strong>"exaple"</strong> na MCreatorze, potem podstawy Javy i mamy dziś <strong>koper_mod</strong> z 445+ pobraniami. Aktualnie pracuję nad <strong>koperlib</strong> — biblioteką Fabric z własnym silnikiem fizyki opartym na Rapier (Rust + Java).</p>
+        <p>Poza kodowaniem oglądam anime — ulubione <strong>Re:Zero</strong> (ulubiona scena: aura monster, schody). Muzycznie słucham czego duszę ma, ostatnio dużo <strong>6arlyhuman</strong> na Spotify. Prowadzę też kanał na YouTube — 78 subów, 39 filmów, bez planu wydawniczego.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-value">445+</div><div class="stat-label">pobrań koper_mod</div></div>
+        <div class="stat"><div class="stat-value">78</div><div class="stat-label">subskrybentów YT</div></div>
+        <div class="stat"><div class="stat-value">500h+</div><div class="stat-label">Minecraft</div></div>
+        <div class="stat"><div class="stat-value">~4 lata</div><div class="stat-label">robię mody</div></div>
+      </div>
+    </div>
+    <div class="about-card">
+      <img src="images/avatar.png" alt="ministerkoperku" style="width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 18px;border:2px solid var(--mint);box-shadow:var(--glow-m);">
+      <div class="about-card-label">// profil</div>
+      <div class="about-card-name">Kornel</div>
+      <div class="about-meta">
+        <div class="about-meta-row"><span class="about-meta-label">wiek</span><span class="about-meta-value">14 lat</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">pseudonim</span><span class="about-meta-value">ministerkoperku</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">miejsce</span><span class="about-meta-value">Kryniczno, PL</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">szkoła</span><span class="about-meta-value">SP Rakoszyce</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">CPU</span><span class="about-meta-value">Ryzen 7 5800X3D</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">GPU</span><span class="about-meta-value">RTX 3060</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">RAM</span><span class="about-meta-value">64 GB DDR4</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">OS</span><span class="about-meta-value">CachyOS + Hyprland</span></div>
+        <div class="about-meta-row"><span class="about-meta-label">motto</span><span class="about-meta-value" style="font-style:italic;color:var(--mint)">jedz, siedź, koperek bóg</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="projects" class="reveal">
+  <div class="section-header">
+    <div class="section-number">02 // projekty</div>
+    <h2 class="section-title">Nad czym pracuję</h2>
+    <p class="section-subtitle">Mody do Minecrafta i własne projekty programistyczne.</p>
+  </div>
+  <div class="projects-grid">
+    <article class="project" data-tilt>
+      <div class="project-header"><div class="project-icon">⚗</div><span class="project-badge">v0.8 — wydane</span></div>
+      <h3 class="project-title">koper_mod</h3>
+      <p class="project-description">Mój pierwszy publiczny mod do Minecrafta. Dodaje bossy, system magii z maną, nowy wymiar i sety pancerzy. Stworzony w MCreatorze z pomocą AI.</p>
+      <div class="project-tags"><span class="tag">Fabric</span><span class="tag">MCreator</span><span class="tag">Java</span><span class="tag">MC 1.21.8</span></div>
+      <div class="project-actions">
+        <a class="project-link" href="https://modrinth.com/mod/koper_mod" target="_blank" rel="noopener">Modrinth <span>→</span></a>
+        <a class="project-link" href="https://ministerkoperku.github.io/koper_mod-website/" target="_blank" rel="noopener">Strona <span>→</span></a>
+      </div>
+    </article>
+    <article class="project" data-tilt>
+      <div class="project-header"><div class="project-icon">⚔</div><span class="project-badge wip">w produkcji</span></div>
+      <h3 class="project-title">koper_fabric_weapons</h3>
+      <p class="project-description">Osobny mod z nowym arsenałem broni do Minecrafta. Aktualnie w bardzo wczesnym etapie rozwoju (v0.1).</p>
+      <div class="project-tags"><span class="tag">Fabric</span><span class="tag">Java</span><span class="tag">MC 1.21.8</span></div>
+      <div class="project-actions">
+        <a class="project-link" href="https://ministerkoperku.github.io/koper_mod-website/" target="_blank" rel="noopener">Mod website <span>→</span></a>
+      </div>
+    </article>
+    <article class="project" data-tilt>
+      <div class="project-header"><div class="project-icon">⛅</div><span class="project-badge wip">w produkcji</span></div>
+      <h3 class="project-title">KRM — Koper Realistic Mod</h3>
+      <p class="project-description">Ambitniejszy mod skupiony na realistycznym przetrwaniu. Pory roku, temperatura, pragnienie, choroby i mechanika psucia się jedzenia.</p>
+      <div class="project-tags"><span class="tag">Fabric</span><span class="tag">survival</span><span class="tag">design</span></div>
+      <div class="project-actions"><span class="project-link muted">faza planowania</span></div>
+    </article>
+    <article class="project" data-tilt>
+      <div class="project-header"><div class="project-icon">⚙</div><span class="project-badge wip">w produkcji</span></div>
+      <h3 class="project-title">koperlib</h3>
+      <p class="project-description">Biblioteka Fabric z silnikiem fizyki opartym na Rapier (Rust → Java przez Project Panama). Własny format FullPack, NavMesh AI, system zachowań dla modów.</p>
+      <div class="project-tags"><span class="tag">Fabric</span><span class="tag">Java</span><span class="tag">Rust</span><span class="tag">Rapier</span><span class="tag">MC 1.21.x</span></div>
+      <div class="project-actions"><span class="project-link muted">early development</span></div>
+    </article>
+    <article class="project" data-tilt>
+      <div class="project-header"><div class="project-icon">▤</div><span class="project-badge">setup</span></div>
+      <h3 class="project-title">Linux Setup</h3>
+      <p class="project-description">Mój daily driver — CachyOS oparty na Archu, z menedżerem okien Hyprland i powłoką Caelestia. Spersonalizowany pod własną estetykę.</p>
+      <div class="project-tags"><span class="tag">CachyOS</span><span class="tag">Hyprland</span><span class="tag">Arch</span><span class="tag">Fish</span></div>
+      <div class="project-actions"><span class="project-link muted">dotfiles wkrótce</span></div>
+    </article>
+  </div>
+</section>
+
+<section id="skills" class="reveal">
+  <div class="section-header">
+    <div class="section-number">03 // skille</div>
+    <h2 class="section-title">Czego się uczę</h2>
+    <p class="section-subtitle">Realistyczna ocena — jestem na początku drogi, ale ciągle się rozwijam.</p>
+  </div>
+  <div class="skills-grid" id="skillsGrid"></div>
+</section>
+
+<section id="plans" class="reveal">
+  <div class="section-header">
+    <div class="section-number">04 // plany</div>
+    <h2 class="section-title">Co dalej</h2>
+    <p class="section-subtitle">Plan na edukację i rozwój w najbliższych latach.</p>
+  </div>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-year">2026</div><div class="timeline-marker"></div>
+      <div><div class="timeline-title">Egzamin ósmoklasisty</div><div class="timeline-desc">Ostatni rok podstawówki. Przygotowanie do egzaminów i wybór szkoły średniej.</div></div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2026 — 2030</div><div class="timeline-marker"></div>
+      <div><div class="timeline-title">Technikum Informatyczne</div><div class="timeline-desc">Planowany kierunek na szkołę średnią — solidne podstawy programowania i tworzenia oprogramowania.</div></div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">~2030+</div><div class="timeline-marker"></div>
+      <div><div class="timeline-title">Studia — Sztuczna Inteligencja</div><div class="timeline-desc">Wstępny plan kontynuacji edukacji. Najbardziej interesuje mnie machine learning i zastosowania AI.</div></div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">równolegle</div><div class="timeline-marker"></div>
+      <div><div class="timeline-title">Rozwijanie własnych projektów</div><div class="timeline-desc">Mody do Minecrafta, eksperymenty z AI, własne narzędzia.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="photos" class="reveal">
+  <div class="section-header">
+    <div class="section-number">05 // foto</div>
+    <h2 class="section-title">Trochę randomów</h2>
+    <p class="section-subtitle">Zdjęcia, rysunki, abominacje i screenshoty z Minecrafta. Honorable mention dla GEJTTO.</p>
+  </div>
+  <div class="photo-grid" id="photoGrid"></div>
+</section>
+
+<section id="youtube" class="reveal">
+  <div class="section-header">
+    <div class="section-number">06 // youtube</div>
+    <h2 class="section-title">Kanał YouTube</h2>
+    <p class="section-subtitle">Bez planu wydawniczego, bez devlogów na siłę.</p>
+  </div>
+  <a class="yt-card" href="https://www.youtube.com/@Ministerkopierd_olu" target="_blank" rel="noopener">
+    <div class="yt-icon">▶</div>
+    <div>
+      <div class="yt-title">Minister Koperku</div>
+      <div class="yt-handle">@Ministerkopierd_olu</div>
+      <p class="yt-description">Polski YouTuber. <span style="color:var(--mint);font-family:var(--font-mono);font-size:.85em">78 subów · 39 filmów</span><br>Gram, koduję, nagryuję cokolwiek. Siemano, misiaczki — jak się nie podoba to czysto spierdalaj. Kiedy będzie film to zagadka.</p>
+    </div>
+  </a>
+</section>
+
+<section id="contact" class="reveal">
+  <div class="section-header">
+    <div class="section-number">07 // kontakt</div>
+    <h2 class="section-title">Złap kontakt</h2>
+    <p class="section-subtitle">Najszybciej znajdziesz mnie na poniższych platformach.</p>
+  </div>
+  <div class="contact-grid">
+    <a class="contact-link" href="https://www.youtube.com/@Ministerkopierd_olu" target="_blank" rel="noopener">
+      <div class="contact-icon">▶</div><div class="contact-info"><div class="contact-label">YOUTUBE</div><div class="contact-value">@Ministerkopierd_olu</div></div>
+    </a>
+    <a class="contact-link" href="https://modrinth.com/mod/koper_mod" target="_blank" rel="noopener">
+      <div class="contact-icon">⬛</div><div class="contact-info"><div class="contact-label">MODRINTH</div><div class="contact-value">koper_mod</div></div>
+    </a>
+    <a class="contact-link" href="https://github.com/ministerkoperku" target="_blank" rel="noopener">
+      <div class="contact-icon">◆</div><div class="contact-info"><div class="contact-label">GITHUB</div><div class="contact-value">ministerkoperku</div></div>
+    </a>
+    <a class="contact-link" href="https://discord.gg/U8Mssqy6" target="_blank" rel="noopener">
+      <div class="contact-icon">◈</div><div class="contact-info"><div class="contact-label">DISCORD</div><div class="contact-value">dołącz do serwera</div></div>
+    </a>
+    <a class="contact-link" href="https://ministerkoperku.github.io/koper_mod-website/" target="_blank" rel="noopener">
+      <div class="contact-icon">◍</div><div class="contact-info"><div class="contact-label">STRONA MODÓW</div><div class="contact-value">koper_mod-website</div></div>
+    </a>
+    <a class="contact-link" href="https://instagram.com/kornelplucienniczak" target="_blank" rel="noopener">
+      <div class="contact-icon">◎</div><div class="contact-info"><div class="contact-label">INSTAGRAM</div><div class="contact-value">kornelplucienniczak</div></div>
+    </a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="footer-text">© 2026 Kornel (ministerkoperku) · koper_mod 445+ pobrań · 78 subów YT</div>
+  <div class="footer-meta">Three.js · GLSL · 4D tesseract · Fabric modding</div>
+</footer>
+<script type="module">
+import * as THREE from 'three';
+
+const canvas = document.getElementById('three-canvas');
+const isMobile = window.innerWidth < 768 || /Mobi|Android/i.test(navigator.userAgent);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 5);
+
+const renderer = new THREE.WebGLRenderer({
+  canvas, antialias: !isMobile, alpha: true, powerPreference: 'high-performance'
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000000, 0);
+
+// ═══════════════════ SHARED BLOB SHADERS ═══════════════════
+const vertexShader = `
+varying vec3 vNormal;
+varying float vDisplacement;
+varying vec3 vWorldPos;
+uniform float uTime;
+uniform float uIntensity;
+
+vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+float snoise(vec3 v){
+  const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+  const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+  vec3 i  = floor(v + dot(v, C.yyy));
+  vec3 x0 = v - i + dot(i, C.xxx);
+  vec3 g = step(x0.yzx, x0.xyz);
+  vec3 l = 1.0 - g;
+  vec3 i1 = min(g.xyz, l.zxy);
+  vec3 i2 = max(g.xyz, l.zxy);
+  vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+  vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+  vec3 x3 = x0 - 1. + 3.0 * C.xxx;
+  i = mod(i, 289.0);
+  vec4 p = permute(permute(permute(
+            i.z + vec4(0.0, i1.z, i2.z, 1.0))
+          + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+          + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+  float n_ = 1.0/7.0;
+  vec3 ns = n_ * D.wyz - D.xzx;
+  vec4 j = p - 49.0 * floor(p * ns.z *ns.z);
+  vec4 x_ = floor(j * ns.z);
+  vec4 y_ = floor(j - 7.0 * x_);
+  vec4 x = x_ *ns.x + ns.yyyy;
+  vec4 y = y_ *ns.x + ns.yyyy;
+  vec4 h = 1.0 - abs(x) - abs(y);
+  vec4 b0 = vec4(x.xy, y.xy);
+  vec4 b1 = vec4(x.zw, y.zw);
+  vec4 s0 = floor(b0)*2.0 + 1.0;
+  vec4 s1 = floor(b1)*2.0 + 1.0;
+  vec4 sh = -step(h, vec4(0.0));
+  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+  vec3 p0 = vec3(a0.xy, h.x);
+  vec3 p1 = vec3(a0.zw, h.y);
+  vec3 p2 = vec3(a1.xy, h.z);
+  vec3 p3 = vec3(a1.zw, h.w);
+  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+  m = m * m;
+  return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+}
+
+void main() {
+  vNormal = normalize(normalMatrix * normal);
+  float t = uTime * 0.25;
+  float n1 = snoise(position * 0.9 + vec3(t, t * 0.7, -t * 0.5));
+  float n2 = snoise(position * 1.8 + vec3(-t * 0.4, t * 0.6, t * 0.8)) * 0.5;
+  float n3 = snoise(position * 3.5 + vec3(t * 0.3, -t * 0.5, t * 0.4)) * 0.25;
+  float displacement = (n1 + n2 + n3) * uIntensity;
+  vDisplacement = displacement;
+  vec3 newPos = position + normal * displacement;
+  vec4 worldPosition = modelMatrix * vec4(newPos, 1.0);
+  vWorldPos = worldPosition.xyz;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);
+}
+`;
+
+const fragmentShader = `
+varying vec3 vNormal;
+varying float vDisplacement;
+varying vec3 vWorldPos;
+uniform float uTime;
+uniform vec3 uColorA;
+uniform vec3 uColorB;
+uniform vec3 uColorC;
+uniform vec3 uCameraPos;
+
+void main() {
+  vec3 viewDir = normalize(uCameraPos - vWorldPos);
+  vec3 normal = normalize(vNormal);
+  float fresnel = pow(1.0 - clamp(dot(viewDir, normal), 0.0, 1.0), 2.2);
+  float flow = vDisplacement * 1.8 + 0.5 + sin(uTime * 0.4) * 0.15;
+  flow = clamp(flow, 0.0, 1.0);
+  vec3 baseColor = mix(uColorC, uColorA, smoothstep(0.0, 0.6, flow));
+  baseColor = mix(baseColor, uColorB, smoothstep(0.6, 1.0, flow) * 0.4);
+  vec3 iridescent = vec3(
+    0.5 + 0.5 * sin(fresnel * 4.0 + uTime * 0.6),
+    0.5 + 0.5 * sin(fresnel * 4.0 + uTime * 0.6 + 2.094),
+    0.5 + 0.5 * sin(fresnel * 4.0 + uTime * 0.6 + 4.188)
+  );
+  iridescent *= 0.12;
+  vec3 rim = uColorA * fresnel * 1.4;
+  vec3 finalColor = baseColor + iridescent + rim;
+  float core = 1.0 - fresnel;
+  finalColor += uColorA * core * 0.2;
+  float alpha = 0.92 + fresnel * 0.08;
+  gl_FragColor = vec4(finalColor, alpha);
+}
+`;
+
+// ═══════════════════ MINT BLOB (top-right) ═══════════════════
+const blobGeo = new THREE.IcosahedronGeometry(1.4, isMobile ? 32 : 64);
+const mintBlob = new THREE.Mesh(blobGeo, new THREE.ShaderMaterial({
+  vertexShader, fragmentShader, transparent: true,
+  uniforms: {
+    uTime: { value: 0 },
+    uIntensity: { value: 0.25 },
+    uColorA: { value: new THREE.Color('#34d399') },
+    uColorB: { value: new THREE.Color('#f472b6') },
+    uColorC: { value: new THREE.Color('#0f3a2e') },
+    uCameraPos: { value: camera.position }
+  }
+}));
+scene.add(mintBlob);
+
+// ═══════════════════ RED BLOB (bottom-left) ═══════════════════
+const redBlob = new THREE.Mesh(blobGeo.clone(), new THREE.ShaderMaterial({
+  vertexShader, fragmentShader, transparent: true,
+  uniforms: {
+    uTime: { value: 100 },
+    uIntensity: { value: 0.22 },
+    uColorA: { value: new THREE.Color('#ef4444') },
+    uColorB: { value: new THREE.Color('#fbbf24') },
+    uColorC: { value: new THREE.Color('#3a0f0f') },
+    uCameraPos: { value: camera.position }
+  }
+}));
+scene.add(redBlob);
+
+// ═══════════════════ 4D TESSERACT (HYPERCUBE) ═══════════════════
+// 16 wierzchołków w 4D (wszystkie ±1 kombinacje)
+const vertices4D = [];
+for (let i = 0; i < 16; i++) {
+  vertices4D.push([
+    (i & 1) ? 1 : -1,
+    (i & 2) ? 1 : -1,
+    (i & 4) ? 1 : -1,
+    (i & 8) ? 1 : -1
+  ]);
+}
+// 32 krawędzie tesseraktu — łączą wierzchołki różniące się o 1 bit
+const edges4D = [];
+for (let i = 0; i < 16; i++) {
+  for (let j = i + 1; j < 16; j++) {
+    const diff = i ^ j;
+    if ((diff & (diff - 1)) === 0) edges4D.push([i, j]);
+  }
+}
+
+const tessGeo = new THREE.BufferGeometry();
+const tessPositions = new Float32Array(edges4D.length * 2 * 3);
+tessGeo.setAttribute('position', new THREE.BufferAttribute(tessPositions, 3));
+const tessMat = new THREE.LineBasicMaterial({
+  color: 0x6ee7b7, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending
+});
+const tesseract = new THREE.LineSegments(tessGeo, tessMat);
+scene.add(tesseract);
+
+// Vertices (kropki w narożach 4D) — dla dodatkowej estetyki
+const tessVertGeo = new THREE.BufferGeometry();
+const tessVertPos = new Float32Array(16 * 3);
+tessVertGeo.setAttribute('position', new THREE.BufferAttribute(tessVertPos, 3));
+const tessVertMat = new THREE.PointsMaterial({
+  color: 0xf472b6, size: 0.08, transparent: true, opacity: 0.7,
+  sizeAttenuation: true, blending: THREE.AdditiveBlending
+});
+const tessVerts = new THREE.Points(tessVertGeo, tessVertMat);
+scene.add(tessVerts);
+
+function updateTesseract(time) {
+  const a1 = time * 0.3, a2 = time * 0.2, a3 = time * 0.25;
+  const c1 = Math.cos(a1), s1 = Math.sin(a1);
+  const c2 = Math.cos(a2), s2 = Math.sin(a2);
+  const c3 = Math.cos(a3), s3 = Math.sin(a3);
+  const projected = vertices4D.map(([x, y, z, w]) => {
+    // Obrót w płaszczyźnie XW
+    let nx = x * c1 - w * s1, nw = x * s1 + w * c1;
+    x = nx; w = nw;
+    // Obrót w płaszczyźnie YW
+    let ny = y * c2 - w * s2;
+    nw = y * s2 + w * c2;
+    y = ny; w = nw;
+    // Obrót w płaszczyźnie ZW
+    let nz = z * c3 - w * s3;
+    nw = z * s3 + w * c3;
+    z = nz; w = nw;
+    // Rzutowanie perspektywiczne 4D → 3D
+    const k = 2.2;
+    const f = 1 / (k - w);
+    return [x * f, y * f, z * f];
+  });
+  // Update edges
+  let idx = 0;
+  for (const [i, j] of edges4D) {
+    const p1 = projected[i], p2 = projected[j];
+    tessPositions[idx++] = p1[0]; tessPositions[idx++] = p1[1]; tessPositions[idx++] = p1[2];
+    tessPositions[idx++] = p2[0]; tessPositions[idx++] = p2[1]; tessPositions[idx++] = p2[2];
+  }
+  tessGeo.attributes.position.needsUpdate = true;
+  // Update vertex points
+  for (let i = 0; i < 16; i++) {
+    tessVertPos[i*3]   = projected[i][0];
+    tessVertPos[i*3+1] = projected[i][1];
+    tessVertPos[i*3+2] = projected[i][2];
+  }
+  tessVertGeo.attributes.position.needsUpdate = true;
+}
+
+// ═══════════════════ BG PARTICLES ═══════════════════
+const pCount = isMobile ? 200 : 600;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(pCount * 3);
+for (let i = 0; i < pCount; i++) {
+  pPos[i*3] = (Math.random() - 0.5) * 30;
+  pPos[i*3+1] = (Math.random() - 0.5) * 30;
+  pPos[i*3+2] = (Math.random() - 0.5) * 20 - 5;
+}
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
+  color: 0x34d399, size: 0.018, transparent: true, opacity: 0.45,
+  sizeAttenuation: true, blending: THREE.AdditiveBlending
+}));
+scene.add(particles);
+
+// ═══════════════════ POSITIONING ═══════════════════
+function positionScene() {
+  const small = window.innerWidth < 860;
+  if (small) {
+    mintBlob.position.set(1.2, 1.6, 0);
+    mintBlob.scale.setScalar(0.75);
+    redBlob.position.set(-1.4, -2.6, -0.5);
+    redBlob.scale.setScalar(0.65);
+    tesseract.position.set(-1.5, 0.5, -3);
+    tesseract.scale.setScalar(0.55);
+    tessVerts.position.copy(tesseract.position);
+    tessVerts.scale.copy(tesseract.scale);
+  } else {
+    mintBlob.position.set(2.6, 0.6, 0);
+    mintBlob.scale.setScalar(1);
+    redBlob.position.set(-2.8, -1.8, -0.5);
+    redBlob.scale.setScalar(0.85);
+    tesseract.position.set(-1, 1.2, -4);
+    tesseract.scale.setScalar(0.7);
+    tessVerts.position.copy(tesseract.position);
+    tessVerts.scale.copy(tesseract.scale);
+  }
+}
+positionScene();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  positionScene();
+});
+
+// ═══════════════════ INTERACTION ═══════════════════
+const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+window.addEventListener('mousemove', (e) => {
+  mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouse.ty = -(e.clientY / window.innerHeight - 0.5) * 2;
+});
+window.addEventListener('touchmove', (e) => {
+  if (e.touches[0]) {
+    mouse.tx = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
+    mouse.ty = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2;
+  }
+}, { passive: true });
+
+let scrollY = 0, tScrollY = 0;
+window.addEventListener('scroll', () => { tScrollY = window.scrollY; });
+
+// ═══════════════════ ANIMATE ═══════════════════
+const clock = new THREE.Clock();
+let isVisible = true;
+document.addEventListener('visibilitychange', () => { isVisible = !document.hidden; });
+
+function animate() {
+  requestAnimationFrame(animate);
+  if (!isVisible) return;
+  const t = clock.getElapsedTime();
+
+  mouse.x += (mouse.tx - mouse.x) * 0.05;
+  mouse.y += (mouse.ty - mouse.y) * 0.05;
+  scrollY += (tScrollY - scrollY) * 0.08;
+
+  // Mint blob
+  mintBlob.rotation.y = t * 0.18 + mouse.x * 0.3;
+  mintBlob.rotation.x = t * 0.12 + mouse.y * 0.2;
+  mintBlob.material.uniforms.uTime.value = t;
+  mintBlob.material.uniforms.uIntensity.value = 0.25 + Math.sin(t * 0.35) * 0.08;
+  mintBlob.material.uniforms.uCameraPos.value.copy(camera.position);
+
+  // Red blob (kontra-rotacja dla efektu)
+  redBlob.rotation.y = -t * 0.22 - mouse.x * 0.25;
+  redBlob.rotation.x = -t * 0.15 - mouse.y * 0.15;
+  redBlob.material.uniforms.uTime.value = t + 100;
+  redBlob.material.uniforms.uIntensity.value = 0.22 + Math.cos(t * 0.4) * 0.07;
+  redBlob.material.uniforms.uCameraPos.value.copy(camera.position);
+
+  // Tesseract — pełna animacja 4D
+  updateTesseract(t);
+  tesseract.rotation.y = t * 0.1;
+  tesseract.rotation.x = t * 0.05;
+  tessVerts.rotation.copy(tesseract.rotation);
+  tessMat.opacity = 0.3 + Math.sin(t * 0.5) * 0.1;
+
+  particles.rotation.y = t * 0.02;
+  particles.rotation.x = t * 0.01;
+
+  // Camera dolly on scroll
+  camera.position.y = -scrollY * 0.0008;
+  camera.lookAt(0, -scrollY * 0.0006, 0);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+requestAnimationFrame(() => {
+  setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 600);
+});
+</script>
+<script>
+// ═══════════════════ PHOTOS ═══════════════════
+const photos = [
+  { n: 1,     alt: 'graffiti z napisem koper', caption: 'graffiti z napisem "koper" — beznadziejne wiem' },
+  { n: 2,     alt: 'mój skin w Roblox',        caption: 'mój skin w Roblox' },
+  { n: 3,     alt: 'dziwne frytki',            caption: 'dziwne frytki — smaczne były' },
+  { n: 4,     alt: 'mój rysunek',              caption: 'mój rysunek (abominacja)' },
+  { n: 5,     alt: 'rysunek chibikuny',        caption: 'chibikuna — rysunek' },
+  { n: 6,     alt: 'rysunek pochisigma',       caption: 'pochisigma — rysunek' },
+  { n: 7,     alt: 'rysunek losowa baba',      caption: 'losowa baba — rysunek' },
+  { n: 8,     alt: 'ja',                       caption: 'ja / jakiś retard' },
+  { n: 'mc-1', alt: 'screenshot Minecraft',    caption: 'screenshot z Minecrafta' },
+  { n: 'mc-2', alt: 'screenshot Minecraft',    caption: 'screenshot z Minecrafta' },
+  { n: 'mc-3', alt: 'screenshot Minecraft',    caption: 'screenshot z Minecrafta' },
+  { n: 'mc-4', alt: 'screenshot Minecraft',    caption: 'screenshot z Minecrafta' },
+];
+const photoGrid = document.getElementById('photoGrid');
+photos.forEach(p => {
+  const fig = document.createElement('figure');
+  fig.className = 'photo';
+  fig.dataset.src = `images/${p.n}.png`;
+  fig.dataset.caption = p.caption;
+  fig.innerHTML = `
+    <span class="photo-number">${String(p.n).padStart(2,'0')}</span>
+    <img src="images/${p.n}.png" alt="${p.alt}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"/>
+    <div class="photo-empty" style="display:none"><span>◍</span>${p.n}.png</div>
+    <figcaption>${p.caption}</figcaption>
+  `;
+  fig.addEventListener('click', () => openLightbox(p));
+  photoGrid.appendChild(fig);
+});
+
+// ═══════════════════ LIGHTBOX ═══════════════════
+const lightbox = document.getElementById('lightbox');
+const lbImg = document.getElementById('lbImg');
+const lbCap = document.getElementById('lbCap');
+function openLightbox(p) {
+  lbImg.src = `images/${p.n}.png`;
+  lbImg.alt = p.alt;
+  lbCap.textContent = p.caption;
+  lightbox.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  lightbox.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+// ═══════════════════ SKILLS ═══════════════════
+const skills = [
+  { name: 'MCreator + AI workflow', level: 80 },
+  { name: 'Minecraft Modding',      level: 65 },
+  { name: 'Linux / Hyprland',       level: 72 },
+  { name: 'Java',                   level: 38 },
+  { name: 'HTML / CSS / JS',        level: 25 },
+  { name: 'AI tools',               level: 70 },
+];
+const skillsGrid = document.getElementById('skillsGrid');
+skills.forEach(s => {
+  const el = document.createElement('div');
+  el.className = 'skill';
+  el.innerHTML = `
+    <div class="skill-name">${s.name}</div>
+    <div class="skill-meta">
+      <div class="skill-bar"><div class="skill-fill" data-level="${s.level}"></div></div>
+      <div class="skill-level">${s.level}%</div>
+    </div>`;
+  skillsGrid.appendChild(el);
+});
+
+// ═══════════════════ SCROLL REVEAL ═══════════════════
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      if (entry.target.id === 'skills') {
+        entry.target.querySelectorAll('.skill-fill').forEach(f => {
+          f.style.width = f.dataset.level + '%';
+        });
+      }
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ═══════════════════ CUSTOM CURSOR ═══════════════════
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursorDot');
+if (window.matchMedia('(hover: hover)').matches) {
+  let cx=0, cy=0, dx=0, dy=0;
+  window.addEventListener('mousemove', (e) => {
+    dx = e.clientX; dy = e.clientY;
+    cursorDot.style.transform = `translate(${dx}px,${dy}px) translate(-50%,-50%)`;
+  });
+  function lerp() {
+    cx += (dx-cx)*0.18; cy += (dy-cy)*0.18;
+    cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
+    requestAnimationFrame(lerp);
+  }
+  lerp();
+  document.querySelectorAll('a, button, .project, .contact-link, .photo').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+  });
+}
+
+// ═══════════════════ 3D TILT ═══════════════════
+if (window.matchMedia('(hover: hover)').matches) {
+  document.querySelectorAll('[data-tilt]').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      card.style.transform = `perspective(1000px) rotateX(${(y-0.5)*-6}deg) rotateY(${(x-0.5)*6}deg)`;
+      card.style.setProperty('--mx', `${x*100}%`);
+      card.style.setProperty('--my', `${y*100}%`);
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
+}
+
+console.log('%cCześć! 👋', 'color:#34d399;font-size:18px;font-family:JetBrains Mono,monospace;font-weight:600;');
+console.log('%cDzięki, że zaglądasz w kod.\n%c— Kornel (ministerkoperku)',
+  'color:#a8c0b5;font-family:JetBrains Mono,monospace;',
+  'color:#f472b6;font-family:JetBrains Mono,monospace;font-style:italic;');
+console.log('%c\n3D scene: 2× liquid plasma blob (GLSL) + rotating tesseract (4D → 3D projection)',
+  'color:#6b8478;font-family:JetBrains Mono,monospace;font-size:11px;');
+</script>
+
+</body>
+</html>
